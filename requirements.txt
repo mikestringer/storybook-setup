@@ -3,3 +3,6 @@ requests>=2.31.0
 # adafruit-circuitpython-neopixel
 # RPi.GPIO
 # pyttsx3
+openai-whisper
+pyaudio
+SpeechRecognition
