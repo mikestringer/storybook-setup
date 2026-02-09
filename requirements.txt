@@ -1,0 +1,5 @@
+requests>=2.31.0
+# Uncomment when adding hardware:
+# adafruit-circuitpython-neopixel
+# RPi.GPIO
+# pyttsx3
