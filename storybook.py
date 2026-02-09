@@ -1,13 +1,72 @@
 #!/usr/bin/env python3
 """
 Magic Storybook - Main Application
-Supports both local and server modes
+Supports both local and server modes with voice input
 """
 
 import sys
 import time
 import requests
+import speech_recognition as sr
 from config import *
+
+class VoiceListener:
+    """
+    Voice listener using local Whisper (no API key needed)
+    """
+    def __init__(self, energy_threshold=300, record_timeout=10):
+        print("🎤 Initializing voice listener...")
+        self.microphone = sr.Microphone()
+        self.recognizer = sr.Recognizer()
+        self.recognizer.energy_threshold = energy_threshold
+        self.recognizer.dynamic_energy_threshold = False
+        self.recognizer.pause_threshold = 1
+        self.record_timeout = record_timeout
+        
+        # Calibrate for ambient noise
+        print("🎤 Calibrating microphone...")
+        with self.microphone as source:
+            self.recognizer.adjust_for_ambient_noise(source, duration=2)
+        print("✅ Microphone ready!")
+    
+    def listen_for_prompt(self):
+        """
+        Listen for a story prompt from the user
+        Returns the recognized text or None if failed
+        """
+        print("\n🎤 Listening... (speak your story idea)")
+        
+        with self.microphone as source:
+            try:
+                # Listen for audio
+                audio = self.recognizer.listen(
+                    source, 
+                    timeout=5,
+                    phrase_time_limit=self.record_timeout
+                )
+                
+                print("🎤 Processing speech...")
+                
+                # Use local Whisper to recognize
+                # This runs on the RPi - no API needed!
+                text = self.recognizer.recognize_whisper(
+                    audio,
+                    language="english",
+                    model="base"  # Options: tiny, base, small, medium, large
+                )
+                
+                print(f"✅ You said: {text}")
+                return text.strip()
+                
+            except sr.WaitTimeoutError:
+                print("⏱️  No speech detected - timeout")
+                return None
+            except sr.UnknownValueError:
+                print("❌ Could not understand audio")
+                return None
+            except Exception as e:
+                print(f"❌ Error: {e}")
+                return None
 
 def check_connection():
     """
@@ -126,8 +185,17 @@ def test_installation():
             print(f"   Is Ollama running? Try: sudo systemctl start ollama")
         return False
     
-    # Test 2: Generate a test story
-    print("\nTest 2: Generating test story...")
+    # Test 2: Check microphone
+    print("\nTest 2: Checking microphone...")
+    try:
+        listener = VoiceListener()
+        print("✅ Microphone initialized")
+    except Exception as e:
+        print(f"⚠️  Microphone test skipped: {e}")
+        print("   This is OK if you don't have a mic connected yet")
+    
+    # Test 3: Generate a test story
+    print("\nTest 3: Generating test story...")
     if MODE == "local":
         print("(This may take 10-30 seconds on RPi 5)")
     else:
@@ -157,7 +225,7 @@ def test_installation():
 
 def main():
     """
-    Main application loop
+    Main application loop with voice interaction
     """
     # Check for test mode
     if len(sys.argv) > 1 and sys.argv[1] == '--test':
@@ -179,30 +247,39 @@ def main():
             print("   sudo systemctl start ollama")
         return
     
-    print("\n✅ Connection OK")
-    print("\n⚠️  Hardware integration not yet implemented!")
-    print("This is a template for you to customize.\n")
+    print("✅ Ollama connection OK")
     
-    # TODO: Add your hardware integration here
+    # Initialize voice listener
+    try:
+        listener = VoiceListener()
+    except Exception as e:
+        print(f"\n❌ Could not initialize microphone: {e}")
+        print("Make sure a USB microphone is connected!")
+        return
     
-    print("Ready for stories! (Press Ctrl+C to exit)\n")
+    print("\n" + "="*60)
+    print("🎤 MAGIC STORYBOOK READY!")
+    print("="*60)
+    print("\nSpeak your story idea when prompted...")
+    print("Press Ctrl+C to exit\n")
     
     try:
-        test_prompts = [
-            "a dragon who loves to bake cookies",
-            "a friendly ghost in a library",
-            "a robot learning to dance",
-            "a magical garden that grows overnight"
-        ]
-        
-        for i, prompt in enumerate(test_prompts, 1):
-            print(f"\n{'='*60}")
-            print(f"Story {i}: {prompt}")
-            print('='*60)
+        while True:
+            # Listen for voice input
+            prompt = listener.listen_for_prompt()
             
-            story = generate_story(prompt)
-            print(f"\n{story}\n")
+            if prompt:
+                # Generate and display story
+                print("\n" + "="*60)
+                story = generate_story(prompt)
+                print("\n📖 YOUR STORY:")
+                print("="*60)
+                print(story)
+                print("="*60 + "\n")
+            else:
+                print("⚠️  No prompt detected. Try again!\n")
             
+            # Wait a bit before listening again
             time.sleep(2)
             
     except KeyboardInterrupt:
