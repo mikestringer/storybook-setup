@@ -13,7 +13,7 @@ OLLAMA_SERVER="http://192.168.1.100:11434"  # This needs Kelly's server IP
 # Model settings
 MODEL="llama3.2:3b"  # Works for both local and server modes
 
-REPO_USER="YOUR-BITBUCKET-USERNAME"  # ⚠️ CHANGE THIS
+REPO_USER="mikestringer"  # github username e.g. https://github.com/mikestringer
 REPO_NAME="storybook-setup"
 # ========================
 
@@ -58,7 +58,9 @@ cd /home/pi/storybook
 
 # Download files from Bitbucket
 echo "⬇️  Downloading project files..."
-BASE_URL="https://bitbucket.org/${REPO_USER}/${REPO_NAME}/raw/main"
+#Don't use my bitbucket, it's too problematic, use github
+#BASE_URL="https://bitbucket.org/${REPO_USER}/${REPO_NAME}/raw/main"
+BASE_URL="https://raw.githubusercontent.com/${mikestringer}/${storybook-setup}/main"
 
 curl -fsSL ${BASE_URL}/storybook.py -o storybook.py
 curl -fsSL ${BASE_URL}/config.py -o config.py
