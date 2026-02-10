@@ -1,4 +1,4 @@
-python# Configuration for Magic Storybook
+#python Configuration for Magic Storybook
 # This file is automatically updated by setup.sh and switch_mode.sh
 
 # ===== MODE SELECTION =====
