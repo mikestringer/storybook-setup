@@ -59,8 +59,8 @@ cd /home/pi/storybook
 # Download files from Bitbucket
 echo "⬇️  Downloading project files..."
 #Don't use my bitbucket, it's too problematic, use github
-#BASE_URL="https://bitbucket.org/${REPO_USER}/${REPO_NAME}/raw/main"
-BASE_URL="https://raw.githubusercontent.com/${mikestringer}/${storybook-setup}/main"
+BASE_URL="https://bitbucket.org/${REPO_USER}/${REPO_NAME}/raw/main"
+#BASE_URL="https://raw.githubusercontent.com/${mikestringer}/${storybook-setup}/main"
 
 curl -fsSL ${BASE_URL}/storybook.py -o storybook.py
 curl -fsSL ${BASE_URL}/config.py -o config.py
