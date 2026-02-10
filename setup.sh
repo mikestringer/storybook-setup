@@ -28,7 +28,8 @@ sudo apt update && sudo apt upgrade -y
 
 # Install dependencies
 echo "📦 [2/5] Installing dependencies..."
-sudo apt install -y python3-pip python3-venv git
+#sudo apt install -y python3-pip python3-venv git
+sudo apt install -y python3-pip python3-venv git portaudio19-dev
 
 # Install Ollama locally if in local mode
 if [ "$INSTALL_MODE" = "local" ]; then
