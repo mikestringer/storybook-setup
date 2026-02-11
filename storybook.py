@@ -16,20 +16,21 @@ class VoiceListener:
     """
     def __init__(self, energy_threshold=300, record_timeout=10):
         print("🎤 Initializing voice listener...")
-        #self.microphone = sr.Microphone() #this could miss the us∫ if it wasn't at the default location
+        
         # Find USB microphone automatically
-   mic_list = sr.Microphone.list_microphone_names()
-   usb_mic_index = None
-   for i, name in enumerate(mic_list):
-       if 'USB' in name.upper() or 'PNP' in name.upper():
-           usb_mic_index = i
-           print(f"🎤 Found USB microphone: {name}")
-           break
-   
-   if usb_mic_index is not None:
-       self.microphone = sr.Microphone(device_index=usb_mic_index)
-   else:
-       self.microphone = sr.Microphone()
+        mic_list = sr.Microphone.list_microphone_names()
+        usb_mic_index = None
+        for i, name in enumerate(mic_list):
+            if 'USB' in name.upper() or 'PNP' in name.upper():
+                usb_mic_index = i
+                print(f"🎤 Found USB microphone: {name}")
+                break
+        
+        if usb_mic_index is not None:
+            self.microphone = sr.Microphone(device_index=usb_mic_index)
+        else:
+            self.microphone = sr.Microphone()
+        
         self.recognizer = sr.Recognizer()
         self.recognizer.energy_threshold = energy_threshold
         self.recognizer.dynamic_energy_threshold = False
