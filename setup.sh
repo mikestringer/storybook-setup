@@ -24,6 +24,8 @@ echo "=========================================="
 
 # Update system
 echo "📦 [1/5] Updating system..."
+#sudo apt update && sudo apt upgrade -y
+export DEBIAN_FRONTEND=noninteractive
 sudo apt update && sudo apt upgrade -y
 
 # Install dependencies
