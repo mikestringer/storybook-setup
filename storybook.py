@@ -217,7 +217,7 @@ def test_installation():
     print()
     
     start_time = time.time()
-    story = generate_story("a brave little robot")
+    story = generate_story("a brave little robot bird")
     elapsed = time.time() - start_time
     
     print(f"\n--- Generated Story ({elapsed:.1f} seconds) ---")
