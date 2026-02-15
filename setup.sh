@@ -1,6 +1,7 @@
 #!/bin/bash
 # Magic Storybook Setup - Supports both Local and Server modes
-
+# The setup curl command to run on the Pis
+#curl -fsSL https://raw.githubusercontent.com/mikestringer/storybook-setup/main/setup.sh | bash
 set -e
 
 # ===== CONFIGURATION =====
