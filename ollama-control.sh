@@ -1,6 +1,14 @@
 #!/bin/bash
 # Control Ollama Server Access
 # Usage: ./ollama-control.sh [enable|disable|status]
+# The commands to use with this shell script
+# Download the control script
+# curl -fsSL https://raw.githubusercontent.com/mikestringer/storybook-setup/main/ollama-control.sh -o ollama-control.sh
+# chmod +x ollama-control.sh
+# Commands
+# ./ollama-control.sh enable   # Turn on
+# ./ollama-control.sh disable  # Turn off
+# ./ollama-control.sh status   # Check status
 
 set -e
 
