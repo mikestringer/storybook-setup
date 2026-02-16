@@ -60,7 +60,7 @@ echo "📁 [4/5] Setting up project..."
 mkdir -p /home/pi/storybook
 cd /home/pi/storybook
 
-# Download files from Bitbucket
+# Download files from Bitbucket, now Github
 echo "⬇️  Downloading project files..."
 #*********Don't use my bitbucket, it's too problematic, use github
 #BASE_URL="https://bitbucket.org/${REPO_USER}/${REPO_NAME}/raw/main"
@@ -70,6 +70,11 @@ curl -fsSL ${BASE_URL}/storybook.py -o storybook.py
 curl -fsSL ${BASE_URL}/config.py -o config.py
 curl -fsSL ${BASE_URL}/requirements.txt -o requirements.txt
 curl -fsSL ${BASE_URL}/switch_mode.sh -o switch_mode.sh
+curl -fsSL ${BASE_URL}/generate_assets.py -o generate_assets.py
+
+# Generate image assets for UI
+echo "🎨 Generating UI assets..."
+python3 generate_assets.py
 
 # Configure for the selected mode
 sed -i "s|MODE = .*|MODE = \"${INSTALL_MODE}\"|" config.py
