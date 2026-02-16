@@ -1,9 +1,15 @@
 requests>=2.31.0
-# Uncomment when adding hardware:
-# adafruit-circuitpython-neopixel
-# RPi.GPIO
-# pyttsx3
 openai-whisper
 pyaudio
 SpeechRecognition
 soundfile
+
+# UI Dependencies (for touchscreen version)
+pygame>=2.5.0
+Pillow>=10.0.0
+adafruit-circuitpython-neopixel
+rpi-backlight
+
+# Optional - uncomment if needed:
+# RPi.GPIO
+# pyttsx3
