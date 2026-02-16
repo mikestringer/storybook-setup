@@ -61,16 +61,23 @@ mkdir -p /home/pi/storybook
 cd /home/pi/storybook
 
 # Download files from Bitbucket, now Github
+# Download files from GitHub
 echo "⬇️  Downloading project files..."
-#*********Don't use my bitbucket, it's too problematic, use github
-#BASE_URL="https://bitbucket.org/${REPO_USER}/${REPO_NAME}/raw/main"
 BASE_URL="https://raw.githubusercontent.com/${REPO_USER}/${REPO_NAME}/main"
 
 curl -fsSL ${BASE_URL}/storybook.py -o storybook.py
+curl -fsSL ${BASE_URL}/storybook_console.py -o storybook_console.py
+curl -fsSL ${BASE_URL}/storybook_ui.py -o storybook_ui.py
 curl -fsSL ${BASE_URL}/config.py -o config.py
 curl -fsSL ${BASE_URL}/requirements.txt -o requirements.txt
 curl -fsSL ${BASE_URL}/switch_mode.sh -o switch_mode.sh
 curl -fsSL ${BASE_URL}/generate_assets.py -o generate_assets.py
+
+# Make scripts executable
+chmod +x storybook.py
+chmod +x storybook_console.py
+chmod +x storybook_ui.py
+chmod +x switch_mode.sh
 
 # Generate image assets for UI
 echo "🎨 Generating UI assets..."
