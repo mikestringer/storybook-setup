@@ -56,10 +56,10 @@ REED_SWITCH_PIN = board.D17 if NEOPIXEL_AVAILABLE else None
 REED_SWITCH_ENABLED = False  # Set to True when reed switch is installed
 
 # UI Settings
-SCREEN_WIDTH = 1280
-SCREEN_HEIGHT = 720
+SCREEN_WIDTH = 720
+SCREEN_HEIGHT = 1280
 #ROTATION = 0  # 0, 90, 180, or 270
-ROTATION = 270  # Rotate for landscape book mode
+ROTATION = 0  # Rotate for landscape book mode
 
 # Font Settings
 try:
