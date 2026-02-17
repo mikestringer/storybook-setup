@@ -8,8 +8,8 @@ import os
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
 # Screen dimensions (rotated for landscape book mode)
-SCREEN_WIDTH = 1280
-SCREEN_HEIGHT = 720
+SCREEN_WIDTH = 720
+SCREEN_HEIGHT = 1280
 
 # Output directory
 ASSETS_DIR = "images"
