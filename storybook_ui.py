@@ -206,7 +206,13 @@ class Storybook:
         # Initialize Pygame
         os.putenv('SDL_FBDEV', '/dev/fb0')
         pygame.init()
-        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
+        #self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
+        # Create screen with actual physical dimensions, content will be rotated
+        if ROTATION in [90, 270]:
+            self.screen = pygame.display.set_mode((SCREEN_HEIGHT, SCREEN_WIDTH), pygame.FULLSCREEN)
+        else:
+            self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
+            
         pygame.mouse.set_visible(False)
         
         # Load fonts
@@ -476,25 +482,34 @@ class Storybook:
     def display_current_page(self):
         """Display the current page"""
         self.busy = True
-        
+    
+        # Create a buffer for the full page
+        buffer = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+    
         # Draw background
-        self.screen.blit(self.images['background'], (0, 0))
-        
+        buffer.blit(self.images['background'], (0, 0))
+    
         # Draw page content
         if self.pages:
             page = self.pages[self.current_page]
-            self.screen.blit(page, (self.text_area['x'], self.text_area['y']))
-        
+            buffer.blit(page, (self.text_area['x'], self.text_area['y']))
+    
         # Draw buttons
         if self.current_page > 0 or self.current_story > 0:
-            self.buttons['back'].show(self.screen)
-        
-        self.buttons['next'].show(self.screen)
-        self.buttons['new'].show(self.screen)
-        
-        pygame.display.flip()
-        self.busy = False
+            self.buttons['back'].show(buffer)
     
+        self.buttons['next'].show(buffer)
+        self.buttons['new'].show(buffer)
+    
+        # Apply rotation if needed
+        if ROTATION != 0:
+            buffer = pygame.transform.rotate(buffer, ROTATION)
+    
+        # Display to screen
+        self.screen.blit(buffer, (0, 0))
+        pygame.display.flip()
+        self.busy = False    
+
     def previous_page(self):
         """Go to previous page"""
         if self.current_page > 0:
