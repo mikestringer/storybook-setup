@@ -554,11 +554,6 @@ class Storybook:
                 for button in self.buttons.values():
                     if button.visible and button.is_in_bounds(event.pos):
                         button.action()
-            
-            # Check button clicks
-            for button in self.buttons.values():
-                if button.visible and button.is_in_bounds(event.pos):
-                    button.action()
     
     def run(self):
         """Main loop"""
