@@ -7,6 +7,7 @@ Supports both local and server modes with voice input
 import sys
 import os
 import time
+import signal
 import threading
 import math
 from enum import Enum
@@ -95,6 +96,7 @@ STORY_WORD_LENGTH = 150  # Use from config
 
 class VoiceListener:
     """Voice listener using local Whisper"""
+    
     def __init__(self, energy_threshold=300, record_timeout=10):
         print("🎤 Initializing voice listener...")
         
@@ -154,6 +156,16 @@ class VoiceListener:
             except Exception as e:
                 print(f"❌ Error: {e}")
                 return None
+    def cleanup(self):
+        """Release microphone resources"""
+        try:
+            if hasattr(self, 'microphone') and self.microphone:
+                # Force close the microphone
+                if hasattr(self.microphone, 'stream') and self.microphone.stream:
+                    self.microphone.stream.close()
+            print("🎤 Microphone cleaned up")
+        except Exception as e:
+            print(f"⚠️  Cleanup error: {e}")
 
 
 class Button:
@@ -575,39 +587,69 @@ class Storybook:
     
     def run(self):
         """Main loop"""
-        # Show welcome
-        self.display_welcome()
-        time.sleep(2)
+        try:
+            # Show welcome
+            self.display_welcome()
+            time.sleep(2)
         
-        # Generate first story
-        self.new_story()
+            # Generate first story
+            self.new_story()
         
-        # Main event loop
-        while self.running:
-            self.handle_events()
-            time.sleep(0.1)
-        
-        # Cleanup
-        if self.pixels:
-            self.pixels.fill((0, 0, 0, 0))
-            self.pixels.show()
-        
-        pygame.quit()
+            # Main event loop
+            while self.running:
+                self.handle_events()
+                time.sleep(0.1)
+    
+        finally:
+            # ALWAYS cleanup, even on crash
+            print("🧹 Cleaning up...")
+            if self.listener:
+                self.listener.cleanup()
+            if self.pixels:
+                self.pixels.fill((0, 0, 0, 0))
+                self.pixels.show()
+            pygame.quit()
+            print("✅ Cleanup complete")
 
 
 def main():
     """Entry point"""
+    import signal
+    
     print("🎪 Starting Magic Storybook UI...")
+    
+    book = None
+    
+    def cleanup_handler(signum, frame):
+        """Handle interrupt signals"""
+        print("\n🛑 Interrupt received, cleaning up...")
+        if book and book.listener:
+            book.listener.cleanup()
+        if book and book.pixels:
+            book.pixels.fill((0, 0, 0, 0))
+            book.pixels.show()
+        pygame.quit()
+        sys.exit(0)
+    
+    # Register signal handlers
+    signal.signal(signal.SIGINT, cleanup_handler)
+    signal.signal(signal.SIGTERM, cleanup_handler)
     
     book = Storybook()
     try:
         book.run()
     except KeyboardInterrupt:
         print("\n👋 Shutting down...")
+        if book.listener:
+            book.listener.cleanup()
     except Exception as e:
         print(f"❌ Error: {e}")
         import traceback
         traceback.print_exc()
+        if book and book.listener:
+            book.listener.cleanup()
+    finally:
+        pygame.quit()
 
 
 if __name__ == "__main__":
