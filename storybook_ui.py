@@ -497,7 +497,7 @@ class Storybook:
             return
         
         self.busy = True
-        self.display_message("Speak your story idea...")
+        self.display_message("Please tell me your story idea...")
         time.sleep(1)
         
         # Set waiting color
