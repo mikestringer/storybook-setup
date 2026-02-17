@@ -425,11 +425,23 @@ class Storybook:
         self.busy = False
     
     def _create_page(self, title=None):
-        """Create a new page surface"""
+        """Create a new page surface using paper background"""
         page_surface = pygame.Surface(
-            (self.text_area['width'], self.text_area['height']),
-            pygame.SRCALPHA
+            (self.text_area['width'], self.text_area['height'])
         )
+        
+        # Use paper background texture instead of plain white
+        if 'background' in self.images:
+            page_surface.blit(
+                self.images['background'],
+                (0, 0),
+                (self.text_area['x'],
+                 self.text_area['y'],
+                 self.text_area['width'],
+                 self.text_area['height'])
+            )
+        else:
+            page_surface.fill((255, 250, 240))  # Fallback warm white
         
         if title:
             # Render title
