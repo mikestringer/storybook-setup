@@ -63,22 +63,23 @@ ROTATION = 0  # Rotate for landscape book mode
 
 # Font Settings
 try:
-    TITLE_FONT = ("DejaVuSerif-Bold.ttf", 48)
-    TEXT_FONT = ("DejaVuSerif.ttf", 28)
+    TITLE_FONT = ("DejaVuSerif-Bold.ttf", 36)
+    TEXT_FONT = ("DejaVuSerif.ttf", 22)
 except:
-    TITLE_FONT = (None, 48)
-    TEXT_FONT = (None, 28)
+    TITLE_FONT = (None, 36)
+    TEXT_FONT = (None, 22)
 
 TITLE_COLOR = (0, 0, 0)
 TEXT_COLOR = (0, 0, 0)
 
 # Layout Settings
-PAGE_TOP_MARGIN = 40
-PAGE_SIDE_MARGIN = 40
+PAGE_TOP_MARGIN = 20
+PAGE_SIDE_MARGIN = 20
 PAGE_BOTTOM_MARGIN = 20
-PAGE_NAV_HEIGHT = 120
-PARAGRAPH_SPACING = 30
-EXTRA_LINE_SPACING = 5
+PAGE_NAV_HEIGHT = 100
+PARAGRAPH_SPACING = 20
+EXTRA_LINE_SPACING = 4
+
 
 # Animation Settings
 WORD_DELAY = 0.05
