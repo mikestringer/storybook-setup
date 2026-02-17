@@ -61,7 +61,7 @@ REED_SWITCH_ENABLED = False  # Set to True when reed switch is installed
 SCREEN_WIDTH = 600
 SCREEN_HEIGHT = 1024
 #ROTATION = 0  # 0, 90, 180, or 270
-ROTATION = 0  # Rotate for landscape book mode
+ROTATION = 90  # Rotate for landscape book mode
 
 # Font Settings
 try:
