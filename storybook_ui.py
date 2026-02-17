@@ -188,6 +188,7 @@ class Storybook:
         self.sleeping = False
         self.busy = False
         self.loading = False
+        self._corner_taps = []  # Track corner taps for secret exit
         
         # Initialize Pygame
         os.putenv('SDL_FBDEV', '/dev/fb0')
@@ -526,16 +527,34 @@ class Storybook:
         self.display_current_page()
     
     def handle_events(self):
-        """Handle touch events"""
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+    """Handle touch events"""
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            self.running = False
+        
+        # ESC key to exit (for testing/admin)
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                print("ESC pressed - exiting...")
                 self.running = False
+        
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            # Check for secret exit (tap top-right corner 3 times)
+            x, y = event.pos
+            if x > SCREEN_WIDTH - 50 and y < 50:
+                self._corner_taps.append(time.time())
+                # Keep only taps within last 3 seconds
+                self._corner_taps = [t for t in self._corner_taps 
+                                    if time.time() - t < 3]
+                if len(self._corner_taps) >= 3:
+                    print("Corner tapped 3 times - exiting...")
+                    self.running = False
+                    return
             
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                # Check button clicks
-                for button in self.buttons.values():
-                    if button.visible and button.is_in_bounds(event.pos):
-                        button.action()
+            # Check button clicks
+            for button in self.buttons.values():
+                if button.visible and button.is_in_bounds(event.pos):
+                    button.action()
     
     def run(self):
         """Main loop"""
