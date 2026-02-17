@@ -30,8 +30,8 @@ ENABLE_AUDIO = False
 AUDIO_DEVICE = "default"
 
 # Connection settings
-CONNECTION_TIMEOUT = 60  # seconds
-MAX_RETRIES = 3
+CONNECTION_TIMEOUT = 180  # seconds
+MAX_RETRIES = 2
 
 def get_ollama_url():
     """
