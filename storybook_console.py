@@ -118,6 +118,7 @@ def generate_story(prompt):
                         "model": MODEL,
                         "prompt": full_prompt,
                         "stream": False,
+                        "keep_alive": -1,  #The -1 means keep it loaded forever.
                         "options": {
                             "temperature": TEMPERATURE,
                             "top_p": TOP_P,
