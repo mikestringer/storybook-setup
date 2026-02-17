@@ -208,8 +208,12 @@ class Storybook:
         pygame.init()
         #self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
         # Create screen with actual physical dimensions, content will be rotated
+        # For rotation, screen dimensions must match physical display
         if ROTATION in [90, 270]:
-            self.screen = pygame.display.set_mode((SCREEN_HEIGHT, SCREEN_WIDTH), pygame.FULLSCREEN)
+            # Physical screen is landscape, content will be portrait
+            physical_width = SCREEN_HEIGHT  # 1024
+            physical_height = SCREEN_WIDTH   # 600
+            self.screen = pygame.display.set_mode((physical_width, physical_height), pygame.FULLSCREEN)
         else:
             self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
             
