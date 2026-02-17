@@ -12,7 +12,11 @@ INSTALL_MODE="local"  # Change to "server" to skip local Ollama install
 OLLAMA_SERVER="http://192.168.1.100:11434"  # This needs Kelly's server IP
 
 # Model settings
-MODEL="llama3.2:3b"  # Works for both local and server modes
+#MODEL="llama3.2:3b"  # Works for both local and server modes
+MODEL_LOCAL="gemma2:2b"     # Faster model for local RPi
+MODEL_SERVER="llama3.1:70b" # Better model for school server
+MODEL="${MODEL_LOCAL}"       # Default to local model
+
 
 REPO_USER="mikestringer"  # github username e.g. https://github.com/mikestringer
 REPO_NAME="storybook-setup"
