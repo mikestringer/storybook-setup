@@ -12,6 +12,7 @@ import math
 from enum import Enum
 from collections import deque
 
+import re
 import pygame
 import requests
 import speech_recognition as sr
@@ -382,11 +383,20 @@ class Storybook:
         except Exception as e:
             print(f"❌ Story generation error: {e}")
             return "Title: Oops!\n\nThe magic book had a little hiccup. Let's try again!"
+            
+    def strip_markdown(self, text):
+        """Remove markdown formatting from story text"""
+        text = re.sub(r'#{1,6}\s*', '', text)  # Remove ## headers
+        text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)  # Remove bold
+        text = re.sub(r'\*(.*?)\*', r'\1', text)  # Remove italic
+        return text.strip()
+
     
     def load_story(self, story_text):
         """Parse story and create pages"""
         self.busy = True
         self.pages = []
+        story_text = self.strip_markdown(story_text)
         
         # Parse title and content
         if story_text.startswith("Title: "):
