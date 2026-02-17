@@ -1,0 +1,13 @@
+python3 << 'EOF'
+import os
+os.putenv('SDL_FBDEV', '/dev/fb0')
+import pygame
+pygame.init()
+screen = pygame.display.set_mode((720, 1280), pygame.FULLSCREEN)
+screen.fill((255, 255, 255))
+pygame.display.flip()
+import time
+time.sleep(3)
+pygame.quit()
+print("Success!")
+EOF
