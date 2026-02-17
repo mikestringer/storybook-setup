@@ -7,7 +7,10 @@ MODE = "local"  # "local" or "server" - automatically set by scripts
 
 # Ollama connection settings
 OLLAMA_SERVER = "http://localhost:11434"  # Automatically set based on MODE
-MODEL = "llama3.2:3b"
+#MODEL = "llama3.2:3b" #larger model
+MODEL = "gemma2:2b" #smaller model
+
+KEEP_ALIVE = -1  # Keep model loaded in memory (-1 = forever)
 
 # Story generation settings
 MAX_STORY_LENGTH = 150  # words
