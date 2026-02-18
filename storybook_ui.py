@@ -9,10 +9,6 @@ import os
 import time
 import signal
 import threading
-import math
-from enum import Enum
-from collections import deque
-
 import re
 import pygame
 import requests
@@ -57,18 +53,10 @@ NEOPIXEL_READING_COLOR = (0, 0, 255, 0)   # Blue - Reading
 REED_SWITCH_PIN = board.D17 if NEOPIXEL_AVAILABLE else None
 REED_SWITCH_ENABLED = False  # Set to True when reed switch is installed
 
-# Physical screen (landscape)
-PHYSICAL_WIDTH = 1024
-PHYSICAL_HEIGHT = 600
-
-# Content dimensions (portrait - what we design for)
-CONTENT_WIDTH = 600
-CONTENT_HEIGHT = 1024
-
 # UI Settings
-SCREEN_WIDTH = CONTENT_WIDTH    # Design in portrait
-SCREEN_HEIGHT = CONTENT_HEIGHT
-ROTATION = 90  # Software rotation angle
+SCREEN_WIDTH = 600
+SCREEN_HEIGHT = 1024
+ROTATION = 0  # No rotation needed - OS handles it
 
 # Font Settings
 try:
