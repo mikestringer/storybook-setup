@@ -7,7 +7,7 @@ Creates all necessary images programmatically
 import os
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
-# Screen dimensions (rotated for landscape book mode)
+# Screen dimensions (rotated for portrait book mode)
 SCREEN_WIDTH = 600
 SCREEN_HEIGHT = 1024
 
