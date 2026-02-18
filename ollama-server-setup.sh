@@ -27,7 +27,7 @@ sudo apt update && sudo apt upgrade -y
 
 # Install dependencies
 echo "📦 [2/6] Installing dependencies..."
-sudo apt install -y curl ufw
+sudo apt install -y curl ufw zstd
 
 # Install Ollama
 echo "📦 [3/6] Installing Ollama..."
