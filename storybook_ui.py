@@ -476,24 +476,22 @@ class Storybook:
     def display_current_page(self):
         """Display the current page"""
         self.busy = True
-
-        # Draw background first
+    
+        # Draw background
         self.screen.blit(self.images['background'], (0, 0))
-
-        # Draw page content on top
+    
+        # Draw page content
         if self.pages:
             page = self.pages[self.current_page]
             self.screen.blit(page, (self.text_area['x'], self.text_area['y']))
     
         # Draw buttons
         if self.current_page > 0 or self.current_story > 0:
-            self.buttons['back'].show(buffer)
+            self.buttons['back'].show(self.screen)
     
-        self.buttons['next'].show(buffer)
-        self.buttons['new'].show(buffer)
+        self.buttons['next'].show(self.screen)
+        self.buttons['new'].show(self.screen)
     
-        # Display to screen
-        self.screen.blit(buffer, (0, 0))
         pygame.display.flip()
         self.busy = False    
 
