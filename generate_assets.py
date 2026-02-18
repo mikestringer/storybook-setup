@@ -145,8 +145,8 @@ def create_loading_image():
 
 def create_button(text, filename):
     """Create a rounded button with text"""
-    button_width = 200
-    button_height = 80
+    button_width = 180
+    button_height = 72
     
     # Create button with alpha channel for rounded corners
     img = Image.new('RGBA', (button_width, button_height), (0, 0, 0, 0))
