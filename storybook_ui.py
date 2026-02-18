@@ -128,7 +128,7 @@ class VoiceListener:
             try:
                 audio = self.recognizer.listen(
                     source,
-                    timeout=5,
+                    timeout=3,
                     phrase_time_limit=self.record_timeout
                 )
                 
@@ -204,14 +204,9 @@ class Storybook:
         #self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
         # Create screen with actual physical dimensions, content will be rotated
         # For rotation, screen dimensions must match physical display
-        if ROTATION in [90, 270]:
-            # Physical screen is landscape, content will be portrait
-            physical_width = SCREEN_HEIGHT  # 1024
-            physical_height = SCREEN_WIDTH   # 600
-            self.screen = pygame.display.set_mode((physical_width, physical_height), pygame.FULLSCREEN)
-        else:
-            self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
-            
+    
+        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
+
         pygame.mouse.set_visible(False)
         
         # Load fonts
@@ -500,10 +495,6 @@ class Storybook:
         self.buttons['next'].show(buffer)
         self.buttons['new'].show(buffer)
     
-        # Apply rotation if needed
-        if ROTATION != 0:
-            buffer = pygame.transform.rotate(buffer, ROTATION)
-    
         # Display to screen
         self.screen.blit(buffer, (0, 0))
         pygame.display.flip()
@@ -550,8 +541,12 @@ class Storybook:
         self._set_status_color(NEOPIXEL_WAITING_COLOR)
         
         # Listen for prompt
-        prompt = self.listener.listen_for_prompt()
-        
+        try:
+            prompt = self.listener.listen_for_prompt()
+        except KeyboardInterrupt:
+            self.running = False
+            return
+
         if not prompt:
             self.display_message("No prompt detected. Try again!")
             time.sleep(2)
