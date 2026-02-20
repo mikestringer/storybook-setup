@@ -4,6 +4,8 @@
 # The setup curl command to run from the server:
 # curl -fsSL https://raw.githubusercontent.com/mikestringer/storybook-setup/main/ollama-server-setup.sh | bash
 # Note that the curl command does not have the -o so the file runs from GitHub and -o means download the file
+# **** Download only command: curl -fsSL https://raw.githubusercontent.com/mikestringer/storybook-setup/main/ollama-server-setup.sh -o ollama-server-setup.sh
+
 
 set -e
 
