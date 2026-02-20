@@ -3,6 +3,7 @@
 # Run this once on your server to set up Ollama for network access
 # The setup curl command to run from the server:
 # curl -fsSL https://raw.githubusercontent.com/mikestringer/storybook-setup/main/ollama-server-setup.sh | bash
+# Note that the curl command does not have the -o so the file runs from GitHub and -o means download the file
 
 set -e
 
