@@ -1,14 +1,6 @@
 #!/bin/bash
-# Control Ollama Server Access
+# Control Ollama Server
 # Usage: ./ollama-control.sh [enable|disable|status]
-# The commands to use with this shell script
-# Download the control script
-# curl -fsSL https://raw.githubusercontent.com/mikestringer/storybook-setup/main/ollama-control.sh -o ollama-control.sh
-# chmod +x ollama-control.sh
-# Commands
-# ./ollama-control.sh enable   # Turn on
-# ./ollama-control.sh disable  # Turn off
-# ./ollama-control.sh status   # Check status
 
 set -e
 
@@ -19,26 +11,24 @@ if [ -z "$ACTION" ]; then
     echo "Usage: $0 [enable|disable|status]"
     echo ""
     echo "Commands:"
-    echo "  enable  - Start Ollama and allow network access"
-    echo "  disable - Stop Ollama and block network access"
+    echo "  enable  - Start Ollama service"
+    echo "  disable - Stop Ollama service"
     echo "  status  - Show current status"
     exit 1
 fi
 
 case "$ACTION" in
     enable)
-        echo "🟢 Enabling Ollama access..."
+        echo "🟢 Starting Ollama service..."
         sudo systemctl start ollama
-        sudo ufw allow ${OLLAMA_PORT}/tcp
-        echo "✅ Ollama is now accessible on port ${OLLAMA_PORT}"
+        echo "✅ Ollama is now running on port ${OLLAMA_PORT}"
         sudo systemctl status ollama --no-pager -l
         ;;
     
     disable)
-        echo "🔴 Disabling Ollama access..."
+        echo "🔴 Stopping Ollama service..."
         sudo systemctl stop ollama
-        sudo ufw deny ${OLLAMA_PORT}/tcp
-        echo "✅ Ollama access disabled"
+        echo "✅ Ollama service stopped"
         ;;
     
     status)
@@ -48,16 +38,15 @@ case "$ACTION" in
         sudo systemctl status ollama --no-pager -l
         echo ""
         echo "=========================================="
-        echo "Firewall Status (port ${OLLAMA_PORT}):"
-        echo "=========================================="
-        sudo ufw status | grep ${OLLAMA_PORT} || echo "No firewall rules for port ${OLLAMA_PORT}"
-        echo ""
-        echo "=========================================="
-        echo "Quick Test:"
+        echo "Connection Test:"
         echo "=========================================="
         if systemctl is-active --quiet ollama; then
             echo "✅ Ollama is running"
-            echo "Test URL: http://$(hostname -I | awk '{print $1}'):${OLLAMA_PORT}/api/tags"
+            SERVER_IP=$(hostname -I | awk '{print $1}')
+            echo "Test URL: http://${SERVER_IP}:${OLLAMA_PORT}/api/tags"
+            echo ""
+            echo "Testing connection..."
+            curl -s http://localhost:${OLLAMA_PORT}/api/tags > /dev/null && echo "✅ Local connection works" || echo "❌ Local connection failed"
         else
             echo "❌ Ollama is stopped"
         fi
