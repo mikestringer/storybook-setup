@@ -1,6 +1,9 @@
 #!/bin/bash
 # Control Ollama Server
-# Usage: ./ollama-control.sh [enable|disable|status]
+# Usage: ./ollama-control.sh [enable|disable|status]'
+# Download (not run) the file command NOTE the -o 
+#curl -fsSL https://raw.githubusercontent.com/mikestringer/storybook-setup/main/ollama-control.sh -o ollama-control.sh
+
 
 set -e
 
