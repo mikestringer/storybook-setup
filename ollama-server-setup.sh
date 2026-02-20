@@ -1,36 +1,33 @@
 #!/bin/bash
 # Ollama Server Setup for Magic Storybook
 # Run this once on your server to set up Ollama for network access
-# The setup curl command to run from the server
+# The setup curl command to run from the server:
 # curl -fsSL https://raw.githubusercontent.com/mikestringer/storybook-setup/main/ollama-server-setup.sh | bash
 
 set -e
 
 # ===== CONFIGURATION =====
-#MODEL="llama3.2:3b"  # Model to serve
-MODEL="llama3.1:70b"  # Best story telling model to serve, may be too resource intensive
-ALLOWED_NETWORK="10.110.66.0/24"  # School network range - adjust as needed
+MODEL="llama3.1:70b"  # Best storytelling model
 OLLAMA_PORT="11434"
 # =========================
 
 echo "=========================================="
 echo "Ollama Server Setup"
 echo "=========================================="
-echo "Server will accept connections from: ${ALLOWED_NETWORK}"
 echo "Port: ${OLLAMA_PORT}"
 echo ""
 
 # Update system
-echo "📦 [1/6] Updating system..."
+echo "📦 [1/5] Updating system..."
 export DEBIAN_FRONTEND=noninteractive
 sudo apt update && sudo apt upgrade -y
 
 # Install dependencies
-echo "📦 [2/6] Installing dependencies..."
-sudo apt install -y curl ufw zstd
+echo "📦 [2/5] Installing dependencies..."
+sudo apt install -y curl zstd
 
 # Install Ollama
-echo "📦 [3/6] Installing Ollama..."
+echo "📦 [3/5] Installing Ollama..."
 if command -v ollama &> /dev/null; then
     echo "✅ Ollama already installed"
 else
@@ -38,7 +35,7 @@ else
 fi
 
 # Configure Ollama to listen on all network interfaces
-echo "⚙️  [4/6] Configuring Ollama for network access..."
+echo "⚙️  [4/5] Configuring Ollama for network access..."
 sudo mkdir -p /etc/systemd/system/ollama.service.d
 
 sudo tee /etc/systemd/system/ollama.service.d/override.conf > /dev/null << 'EOF'
@@ -56,29 +53,12 @@ echo "⏳ Waiting for Ollama to start..."
 sleep 5
 
 # Pull the model
-echo "📥 [5/6] Downloading model: ${MODEL}"
-echo "This may take 5-10 minutes..."
+echo "📥 [5/5] Downloading model: ${MODEL}"
+echo "This may take 15-30 minutes for the 70b model..."
 ollama pull ${MODEL}
 
 echo "✅ Model downloaded!"
 ollama list
-
-# Configure firewall
-echo "🔒 [6/6] Configuring firewall..."
-
-# Enable UFW if not already enabled
-sudo ufw --force enable
-
-# Allow SSH (important - don't lock yourself out!)
-sudo ufw allow 2222/tcp comment 'SSH'
-
-# Allow Ollama only from school network
-sudo ufw allow from ${ALLOWED_NETWORK} to any port ${OLLAMA_PORT} proto tcp comment 'Ollama for storybooks'
-
-# Show firewall status
-echo ""
-echo "Firewall rules:"
-sudo ufw status numbered
 
 echo ""
 echo "=========================================="
@@ -89,13 +69,12 @@ echo "Server is now accessible at:"
 echo "  http://$(hostname -I | awk '{print $1}'):${OLLAMA_PORT}"
 echo ""
 echo "Model loaded: ${MODEL}"
-echo "Allowed network: ${ALLOWED_NETWORK}"
 echo ""
-echo "To control access later:"
-echo "  Enable:  sudo systemctl start ollama && sudo ufw allow ${OLLAMA_PORT}"
-echo "  Disable: sudo systemctl stop ollama && sudo ufw deny ${OLLAMA_PORT}"
+echo "To control the service:"
+echo "  Start:   sudo systemctl start ollama"
+echo "  Stop:    sudo systemctl stop ollama"
+echo "  Status:  sudo systemctl status ollama"
 echo ""
 echo "To test from a storybook RPi:"
 echo "  curl http://$(hostname -I | awk '{print $1}'):${OLLAMA_PORT}/api/tags"
 echo ""
-
