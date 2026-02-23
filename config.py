@@ -9,7 +9,7 @@ MODE = "local"  # "local" or "server" - automatically set by scripts
 OLLAMA_SERVER = "http://localhost:11434"  # Automatically set based on MODE
 #MODEL = "llama3.2:3b" # model
 #MODEL = "llama3.1:70b" #larger model
-model = "llama3.1:8b" #smaller model for trying to make the server run faster for student requests
+MODEL = "llama3.1:8b" #smaller model for trying to make the server run faster for student requests
 
 KEEP_ALIVE = -1  # Keep model loaded in memory (-1 = forever)
 
