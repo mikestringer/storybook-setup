@@ -7,7 +7,7 @@ MODE=$1
 CONFIG_FILE="/home/pi/storybook/config.py"
 
 # Server IP for network mode
-SERVER_IP="192.168.1.100:11434"  # ⚠️ Update this with your school server
+SERVER_IP="10.110.5.182:11434"  # ⚠️ Updated this with Kelly's server IP. Make sure it's the external server IP not the docket IP. Don't change the port as it will not forward.
 
 if [ -z "$MODE" ]; then
     echo "Usage: ./switch_mode.sh [local|server]"
