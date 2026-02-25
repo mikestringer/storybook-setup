@@ -133,11 +133,12 @@ class VoiceListener:
                 )
                 
                 print("🎤 Processing speech...")
-                text = self.recognizer.recognize_whisper(
-                    audio,
-                    language="english",
-                    model="base"
-                )
+                text = self.recognizer.recognize_google(audio)
+                #text = self.recognizer.recognize_whisper(
+                #    audio,
+                #    language="english",
+                #    model="base"
+                #)
                 
                 print(f"✅ You said: {text}")
                 return text.strip()
