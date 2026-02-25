@@ -36,7 +36,7 @@ sudo apt update && sudo apt upgrade -y
 # Install dependencies
 echo "📦 [2/5] Installing dependencies..."
 #sudo apt install -y python3-pip python3-venv git
-sudo apt install -y python3-pip python3-venv git portaudio19-dev
+sudo apt install -y python3-pip python3-venv git portaudio19-dev flac
 
 # Install Ollama locally if in local mode
 if [ "$INSTALL_MODE" = "local" ]; then
@@ -129,6 +129,28 @@ EOF
 
 sudo systemctl daemon-reload
 sudo systemctl enable storybook.service
+
+# Create display rotation script (for Pi 4 with touchscreen)
+echo "⚙️  Configuring display rotation..."
+cat > /home/pi/rotate-display.sh << 'ROTATE_EOF'
+#!/bin/bash
+sleep 5
+DISPLAY=:0 xrandr --output HDMI-1 --rotate right
+DISPLAY=:0 xinput set-prop "QDTECH̐MPI700 MPI7002" "Coordinate Transformation Matrix" 0 1 0 -1 0 1 0 0 1
+ROTATE_EOF
+
+chmod +x /home/pi/rotate-display.sh
+
+# Create autostart entry
+mkdir -p /home/pi/.config/autostart
+cat > /home/pi/.config/autostart/rotate.desktop << 'DESKTOP_EOF'
+[Desktop Entry]
+Type=Application
+Name=Rotate Display
+Exec=/home/pi/rotate-display.sh
+DESKTOP_EOF
+
+echo "✅ Display rotation configured"
 
 echo ""
 echo "=========================================="
