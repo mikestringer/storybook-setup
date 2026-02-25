@@ -1,0 +1,22 @@
+# debug
+DISPLAY=:0 python3 storybook_ui.py 2>&1 | tee crash.log
+
+#how to setup a pi 4 for rotating to portrait 
+nano ~/rotate-display.sh
+#add this to the file
+#!/bin/bash
+sleep 5
+DISPLAY=:0 xrandr --output HDMI-1 --rotate right
+DISPLAY=:0 xinput set-prop "QDTECH̐MPI700 MPI7002" "Coordinate Transformation Matrix" 0 1 0 -1 0 1 0 0 1
+#enable it
+chmod +x ~/rotate-display.sh
+#run it
+./rotate-display.sh
+#make it persist across reboots
+mkdir -p ~/.config/autostart
+nano ~/.config/autostart/rotate.desktop
+#put this in the file
+[Desktop Entry]
+Type=Application
+Name=Rotate Display
+Exec=/home/pi/rotate-display.sh
