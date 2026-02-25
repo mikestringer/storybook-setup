@@ -20,3 +20,17 @@ nano ~/.config/autostart/rotate.desktop
 Type=Application
 Name=Rotate Display
 Exec=/home/pi/rotate-display.sh
+
+
+
+#greps
+grep -A 2 "Processing speech" storybook_ui.py
+
+#Downloading files
+
+curl -fsSL "https://raw.githubusercontent.com/mikestringer/storybook-setup/main/storybook_ui.py?$(date +%s)" -o storybook_ui.py
+
+
+#Starting from the ssh shell
+DISPLAY=:0 python3 storybook_ui.py
+
