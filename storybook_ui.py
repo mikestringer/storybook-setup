@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Magic Storybook - Robust Pygame Touchscreen UI Version
+Magic Storybook - Pygame Touchscreen UI Version
 Supports both local and server modes with voice input
 """
 
@@ -77,6 +77,7 @@ PAGE_NAV_HEIGHT = 100
 PARAGRAPH_SPACING = 20
 EXTRA_LINE_SPACING = 4
 
+
 # Animation Settings
 WORD_DELAY = 0.05
 TITLE_FADE_TIME = 0.05
@@ -84,18 +85,15 @@ TITLE_FADE_STEPS = 10
 TEXT_FADE_TIME = 0.1
 TEXT_FADE_STEPS = 20
 
-# Robustness Settings
-VOICE_TIMEOUT = 30  # Maximum seconds to wait for voice input
-ALSA_ERROR_DELAY = 0.5  # Delay after ALSA errors before showing "listening"
+# Story Settings
+STORY_WORD_LENGTH = 150  # Use from config
 
 
 class VoiceListener:
-    """Voice listener using local Whisper with robustness improvements"""
+    """Voice listener using local Whisper"""
     
     def __init__(self, energy_threshold=300, record_timeout=10):
         print("🎤 Initializing voice listener...")
-        self._listening = False
-        self._stop_listening = False
         
         # Find USB microphone automatically
         mic_list = sr.Microphone.list_microphone_names()
@@ -118,43 +116,21 @@ class VoiceListener:
         self.record_timeout = record_timeout
         
         print("🎤 Calibrating microphone...")
-        try:
-            with self.microphone as source:
-                self.recognizer.adjust_for_ambient_noise(source, duration=2)
-            print("✅ Microphone ready!")
-        except Exception as e:
-            print(f"⚠️  Microphone calibration warning: {e}")
+        with self.microphone as source:
+            self.recognizer.adjust_for_ambient_noise(source, duration=2)
+        print("✅ Microphone ready!")
     
-    def listen_for_prompt(self, ready_callback=None, interrupt_flag=None):
-        """Listen for a story prompt with interrupt support"""
-        self._listening = True
-        self._stop_listening = False
-        
-        # Wait for ALSA to settle before showing "listening"
-        time.sleep(ALSA_ERROR_DELAY)
-        
-        # Call ready callback (shows "listening" indicator)
-        if ready_callback and not (interrupt_flag and interrupt_flag()):
-            ready_callback()
+    def listen_for_prompt(self):
+        """Listen for a story prompt"""
+        print("\n🎤 Listening...")
         
         with self.microphone as source:
             try:
-                # Check for interrupt before listening
-                if interrupt_flag and interrupt_flag():
-                    self._listening = False
-                    return None
-                
-                print("\n🎤 Listening...")
                 audio = self.recognizer.listen(
                     source,
                     timeout=3,
                     phrase_time_limit=self.record_timeout
                 )
-                
-                # Check for interrupt before processing
-                if interrupt_flag and interrupt_flag():
-                    self._listening = False
-                    return None
                 
                 print("🎤 Processing speech...")
                 text = self.recognizer.recognize_whisper(
@@ -164,39 +140,27 @@ class VoiceListener:
                 )
                 
                 print(f"✅ You said: {text}")
-                self._listening = False
                 return text.strip()
                 
             except sr.WaitTimeoutError:
-                print("⏱️  Timeout - no speech detected")
-                self._listening = False
+                print("⏱️  Timeout")
                 return None
             except sr.UnknownValueError:
-                print("❌ Could not understand speech")
-                self._listening = False
+                print("❌ Could not understand")
                 return None
             except Exception as e:
-                print(f"❌ Voice error: {e}")
-                self._listening = False
+                print(f"❌ Error: {e}")
                 return None
-    
-    def stop_listening(self):
-        """Force stop listening"""
-        self._stop_listening = True
-    
-    def is_listening(self):
-        """Check if currently listening"""
-        return self._listening
-    
     def cleanup(self):
         """Release microphone resources"""
         try:
-            print("🎤 Releasing microphone...")
-            self.microphone = None
-            self.recognizer = None
-            print("✅ Microphone released")
+            if hasattr(self, 'microphone') and self.microphone:
+                # Force close the microphone
+                if hasattr(self.microphone, 'stream') and self.microphone.stream:
+                    self.microphone.stream.close()
+            print("🎤 Microphone cleaned up")
         except Exception as e:
-            print(f"⚠️  Cleanup warning: {e}")
+            print(f"⚠️  Cleanup error: {e}")
 
 
 class Button:
@@ -221,27 +185,28 @@ class Button:
 
 
 class Storybook:
-    """Main storybook UI application with robustness improvements"""
+    """Main storybook UI application"""
     
     def __init__(self):
         self.pages = []
         self.stories = []
         self.current_page = 0
         self.current_story = 0
-        
-        # Robustness flags
-        self._running = True
-        self._busy = False
-        self._sleep_request = False
-        self._loading = False
-        
-        # Corner tap tracking for secret exit
-        self._corner_taps = []
+        self.running = True
+        self.sleeping = False
+        self.busy = False
+        self.loading = False
+        self._corner_taps = []  # Track corner taps for secret exit
         
         # Initialize Pygame
         os.putenv('SDL_FBDEV', '/dev/fb0')
         pygame.init()
+        #self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
+        # Create screen with actual physical dimensions, content will be rotated
+        # For rotation, screen dimensions must match physical display
+    
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
+
         pygame.mouse.set_visible(False)
         
         # Load fonts
@@ -304,11 +269,6 @@ class Storybook:
                     auto_write=False
                 )
                 self._set_status_color(NEOPIXEL_LOADING_COLOR)
-                
-                # Start loading animation thread
-                self._loading_thread = threading.Thread(target=self._handle_loading_animation)
-                self._loading_thread.daemon = True
-                self._loading_thread.start()
             except Exception as e:
                 print(f"⚠️  NeoPixel init failed: {e}")
                 self.pixels = None
@@ -331,26 +291,6 @@ class Storybook:
             print(f"❌ Voice init failed: {e}")
             self.listener = None
     
-    def _handle_loading_animation(self):
-        """Pulse NeoPixel during loading"""
-        if not self.pixels:
-            return
-        
-        try:
-            pulse = Pulse(
-                self.pixels,
-                speed=0.1,
-                color=NEOPIXEL_LOADING_COLOR,
-                period=3
-            )
-            
-            while self._running:
-                if self._loading:
-                    pulse.animate()
-                time.sleep(0.1)
-        except:
-            pass
-    
     def _load_image(self, name, filename):
         """Load an image"""
         try:
@@ -361,8 +301,8 @@ class Storybook:
     def _set_status_color(self, color):
         """Set NeoPixel status color"""
         if self.pixels:
-            self._loading = (color == NEOPIXEL_LOADING_COLOR)
-            if not self._loading:
+            self.loading = (color == NEOPIXEL_LOADING_COLOR)
+            if not self.loading:
                 self.pixels.fill(color)
                 self.pixels.show()
     
@@ -383,7 +323,7 @@ class Storybook:
     
     def display_message(self, message):
         """Display a centered message"""
-        self._busy = True
+        self.busy = True
         self.screen.blit(self.images['background'], (0, 0))
         
         # Render message
@@ -398,7 +338,7 @@ class Storybook:
             y += self.title_font.get_height()
         
         pygame.display.flip()
-        self._busy = False
+        self.busy = False
     
     def _wrap_text(self, text, font, width):
         """Wrap text to fit width"""
@@ -432,17 +372,13 @@ class Storybook:
         )
         
         try:
-            # Check for interrupt before making request
-            if self._sleep_request:
-                return None
-            
             response = requests.post(
                 f"{ollama_url}/api/generate",
                 json={
                     "model": MODEL,
                     "prompt": full_prompt,
                     "stream": False,
-                    "keep_alive": -1,
+                    "keep_alive": -1,  # The -1 means keep it loaded forever.
                     "options": {
                         "temperature": TEMPERATURE,
                         "top_p": TOP_P,
@@ -453,27 +389,24 @@ class Storybook:
                 timeout=CONNECTION_TIMEOUT
             )
             
-            # Check for interrupt after request
-            if self._sleep_request:
-                return None
-            
             response.raise_for_status()
             return response.json()['response'].strip()
             
         except Exception as e:
             print(f"❌ Story generation error: {e}")
             return "Title: Oops!\n\nThe magic book had a little hiccup. Let's try again!"
-    
+            
     def strip_markdown(self, text):
         """Remove markdown formatting from story text"""
-        text = re.sub(r'#{1,6}\s*', '', text)
-        text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)
-        text = re.sub(r'\*(.*?)\*', r'\1', text)
+        text = re.sub(r'#{1,6}\s*', '', text)  # Remove ## headers
+        text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)  # Remove bold
+        text = re.sub(r'\*(.*?)\*', r'\1', text)  # Remove italic
         return text.strip()
+
     
     def load_story(self, story_text):
         """Parse story and create pages"""
-        self._busy = True
+        self.busy = True
         self.pages = []
         story_text = self.strip_markdown(story_text)
         
@@ -493,11 +426,6 @@ class Storybook:
         # Add content paragraphs
         paragraphs = content.split("\n\n")
         for paragraph in paragraphs:
-            # Check for interrupt
-            if self._sleep_request:
-                self._busy = False
-                return
-            
             lines = self._wrap_text(paragraph, self.text_font, self.text_area['width'])
             
             for line in lines:
@@ -516,7 +444,7 @@ class Storybook:
         
         self.pages.append(current_page)
         self._set_status_color(NEOPIXEL_READING_COLOR)
-        self._busy = False
+        self.busy = False
     
     def _create_page(self, title=None):
         """Create a new page surface using background image"""
@@ -547,26 +475,26 @@ class Storybook:
     
     def display_current_page(self):
         """Display the current page"""
-        self._busy = True
-        
+        self.busy = True
+    
         # Draw background
         self.screen.blit(self.images['background'], (0, 0))
-        
+    
         # Draw page content
         if self.pages:
             page = self.pages[self.current_page]
             self.screen.blit(page, (self.text_area['x'], self.text_area['y']))
-        
+    
         # Draw buttons
         if self.current_page > 0 or self.current_story > 0:
             self.buttons['back'].show(self.screen)
-        
+    
         self.buttons['next'].show(self.screen)
         self.buttons['new'].show(self.screen)
-        
-        pygame.display.flip()
-        self._busy = False
     
+        pygame.display.flip()
+        self.busy = False    
+
     def previous_page(self):
         """Go to previous page"""
         if self.current_page > 0:
@@ -594,143 +522,35 @@ class Storybook:
         self.display_current_page()
     
     def new_story(self):
-        """Generate a new story with timeout and error handling"""
-        # Prevent concurrent story generation
-        if self._busy:
-            return
-        
+        """Generate a new story"""
         if not self.listener:
-            self.display_message("Voice input not available!\n\nPlease restart the storybook.")
-            time.sleep(3)
-            self.display_current_page() if self.pages else self.display_welcome()
+            self.display_message("Voice input not available!")
+            time.sleep(2)
             return
         
-        self._busy = True
+        self.busy = True
         self.display_message("Please tell me your story idea...")
-        pygame.display.flip()
         time.sleep(1)
         
-        # Check for interrupt
-        if self._sleep_request:
-            self._busy = False
+        # Set waiting color
+        self._set_status_color(NEOPIXEL_WAITING_COLOR)
+        
+        # Listen for prompt
+        try:
+            prompt = self.listener.listen_for_prompt()
+        except KeyboardInterrupt:
+            self.running = False
             return
-        
-        # Set waiting color and prepare for voice input
-        def show_listening():
-            """Callback when mic is ready"""
-            if not self._sleep_request:
-                self._set_status_color(NEOPIXEL_WAITING_COLOR)
-        
-        # Listen with timeout wrapper
-        prompt = None
-        listen_result = [None]
-        listen_error = [None]
-        
-        def listen_thread():
-            """Thread to listen with interrupt support"""
-            try:
-                listen_result[0] = self.listener.listen_for_prompt(
-                    ready_callback=show_listening,
-                    interrupt_flag=lambda: self._sleep_request
-                )
-            except Exception as e:
-                listen_error[0] = str(e)
-        
-        # Start listening thread
-        thread = threading.Thread(target=listen_thread)
-        thread.daemon = True
-        thread.start()
-        
-        # Wait with timeout
-        thread.join(timeout=VOICE_TIMEOUT)
-        
-        # Check result
-        if thread.is_alive():
-            # Timeout - mic not responding
-            print("⚠️  Voice input timeout")
-            self._set_status_color(NEOPIXEL_READING_COLOR)
-            self.display_message(
-                "Microphone not responding.\n\n"
-                "Please unplug and replug\n"
-                "the USB microphone.\n\n"
-                "Tap screen to continue."
-            )
-            self._busy = False
-            
-            # Wait for tap
-            waiting = True
-            while waiting and self._running:
-                for event in pygame.event.get():
-                    if event.type == pygame.MOUSEBUTTONDOWN:
-                        waiting = False
-                        break
-                time.sleep(0.1)
-            
-            if self.pages:
-                self.display_current_page()
-            else:
-                self.display_welcome()
-            return
-        
-        # Check for errors
-        if listen_error[0]:
-            print(f"⚠️  Voice error: {listen_error[0]}")
-            self._set_status_color(NEOPIXEL_READING_COLOR)
-            self.display_message("Voice error.\n\nTap to try again.")
-            self._busy = False
-            
-            # Wait for tap
-            waiting = True
-            while waiting and self._running:
-                for event in pygame.event.get():
-                    if event.type == pygame.MOUSEBUTTONDOWN:
-                        waiting = False
-                        break
-                time.sleep(0.1)
-            
-            if self.pages:
-                self.display_current_page()
-            else:
-                self.display_welcome()
-            return
-        
-        # Get the prompt
-        prompt = listen_result[0]
-        
-        # Check for interrupt
-        if self._sleep_request:
-            self._busy = False
-            return
-        
+
         if not prompt:
-            print("No prompt detected")
-            self._set_status_color(NEOPIXEL_READING_COLOR)
-            self.display_message("No speech detected.\n\nTap to try again.")
-            self._busy = False
-            
-            # Wait for tap
-            waiting = True
-            while waiting and self._running:
-                for event in pygame.event.get():
-                    if event.type == pygame.MOUSEBUTTONDOWN:
-                        waiting = False
-                        break
-                time.sleep(0.1)
-            
-            if self.pages:
-                self.display_current_page()
-            else:
-                self.display_welcome()
+            self.display_message("No prompt detected. Try again!")
+            time.sleep(2)
+            self.display_current_page()
             return
         
         # Generate story
         self.display_loading()
         story = self.generate_story(prompt)
-        
-        # Check for interrupt
-        if self._sleep_request or story is None:
-            self._busy = False
-            return
         
         # Add to stories and display
         self.stories.append(story)
@@ -738,37 +558,30 @@ class Storybook:
         self.current_page = 0
         
         self.load_story(story)
-        
-        # Check for interrupt
-        if self._sleep_request:
-            self._busy = False
-            return
-        
         self.display_current_page()
     
     def handle_events(self):
         """Handle touch events"""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                self._running = False
+                self.running = False
             
             # ESC key to exit (for testing/admin)
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     print("ESC pressed - exiting...")
-                    self._running = False
+                    self.running = False
             
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                x, y = event.pos
-                
                 # Check for secret exit (tap top-right corner 3 times)
+                x, y = event.pos
                 if x > SCREEN_WIDTH - 50 and y < 50:
                     self._corner_taps.append(time.time())
                     self._corner_taps = [t for t in self._corner_taps 
                                         if time.time() - t < 3]
                     if len(self._corner_taps) >= 3:
                         print("Corner tapped 3 times - exiting...")
-                        self._running = False
+                        self.running = False
                         return
                 
                 # Check button clicks
@@ -782,57 +595,31 @@ class Storybook:
             # Show welcome
             self.display_welcome()
             time.sleep(2)
-            
+        
             # Generate first story
-            if not self._sleep_request:
-                self.new_story()
-            
+            self.new_story()
+        
             # Main event loop
-            while self._running:
+            while self.running:
                 self.handle_events()
                 time.sleep(0.1)
-        
-        finally:
-            # Cleanup
-            self._cleanup()
     
-    def _cleanup(self):
-        """Clean up resources"""
-        print("🧹 Cleaning up...")
-        
-        # Set sleep request to interrupt any running operations
-        self._sleep_request = True
-        
-        # Stop voice listener
-        if self.listener:
-            if self.listener.is_listening():
-                self.listener.stop_listening()
-            self.listener.cleanup()
-        
-        # Wait for busy operations to complete
-        timeout = 5
-        start = time.time()
-        while self._busy and (time.time() - start) < timeout:
-            time.sleep(0.1)
-        
-        # Turn off NeoPixels
-        if self.pixels:
-            self.pixels.fill((0, 0, 0, 0))
-            self.pixels.show()
-        
-        # Turn on backlight
-        if self.backlight:
-            try:
-                self.backlight.power = True
-            except:
-                pass
-        
-        pygame.quit()
-        print("✅ Cleanup complete")
+        finally:
+            # ALWAYS cleanup, even on crash
+            print("🧹 Cleaning up...")
+            if self.listener:
+                self.listener.cleanup()
+            if self.pixels:
+                self.pixels.fill((0, 0, 0, 0))
+                self.pixels.show()
+            pygame.quit()
+            print("✅ Cleanup complete")
 
 
 def main():
     """Entry point"""
+    import signal
+    
     print("🎪 Starting Magic Storybook UI...")
     
     book = None
@@ -840,26 +627,33 @@ def main():
     def cleanup_handler(signum, frame):
         """Handle interrupt signals"""
         print("\n🛑 Interrupt received, cleaning up...")
-        if book:
-            book._sleep_request = True
-            book._running = False
+        if book and book.listener:
+            book.listener.cleanup()
+        if book and book.pixels:
+            book.pixels.fill((0, 0, 0, 0))
+            book.pixels.show()
+        pygame.quit()
+        sys.exit(0)
     
     # Register signal handlers
     signal.signal(signal.SIGINT, cleanup_handler)
     signal.signal(signal.SIGTERM, cleanup_handler)
     
+    book = Storybook()
     try:
-        book = Storybook()
         book.run()
     except KeyboardInterrupt:
         print("\n👋 Shutting down...")
+        if book.listener:
+            book.listener.cleanup()
     except Exception as e:
         print(f"❌ Error: {e}")
         import traceback
         traceback.print_exc()
+        if book and book.listener:
+            book.listener.cleanup()
     finally:
-        if book:
-            book._cleanup()
+        pygame.quit()
 
 
 if __name__ == "__main__":
