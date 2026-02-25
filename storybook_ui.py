@@ -54,8 +54,8 @@ REED_SWITCH_PIN = board.D17 if NEOPIXEL_AVAILABLE else None
 REED_SWITCH_ENABLED = False  # Set to True when reed switch is installed
 
 # UI Settings
-SCREEN_WIDTH = 600
-SCREEN_HEIGHT = 1024
+SCREEN_WIDTH = 864
+SCREEN_HEIGHT = 1152
 ROTATION = 0  # No rotation needed - OS handles it
 
 # Font Settings
