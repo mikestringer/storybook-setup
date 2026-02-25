@@ -1,3 +1,12 @@
+#To deploy a fresh Pi 4:
+#Flash SD card with Pi Imager (Raspberry Pi OS, X11 mode)
+#Boot and SSH in
+#Run:
+curl -fsSL https://raw.githubusercontent.com/mikestringer/storybook-setup/main/setup.sh | bash
+#reboot
+
+
+
 # debug
 DISPLAY=:0 python3 storybook_ui.py 2>&1 | tee crash.log
 
