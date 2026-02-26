@@ -326,26 +326,33 @@ class Storybook:
         """Display a centered message"""
         self.busy = True
         
-        # Draw background
+        # Draw background image
         self.screen.blit(self.images['background'], (0, 0))
         
-        # Create a message surface (like _create_page does)
-        message_surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
-        message_surface.fill((255, 250, 240))  # Solid off-white fill
-        
-        # Render text onto the message surface
+        # Calculate text dimensions
         lines = self._wrap_text(message, self.title_font, SCREEN_WIDTH - 40)
-        total_height = len(lines) * self.title_font.get_height()
-        y = (SCREEN_HEIGHT - total_height) // 2
+        line_height = self.title_font.get_height()
+        total_height = len(lines) * line_height
+        max_width = max(self.title_font.size(line)[0] for line in lines)
         
+        # Create surface just for the text (not full screen)
+        padding = 20
+        message_surface = pygame.Surface((max_width + padding*2, total_height + padding*2))
+        message_surface.fill((255, 250, 240))
+        
+        # Render text onto message surface
+        y = padding
         for line in lines:
             text_surface = self.title_font.render(line, True, TITLE_COLOR)
-            x = (SCREEN_WIDTH - text_surface.get_width()) // 2
+            x = (message_surface.get_width() - text_surface.get_width()) // 2
             message_surface.blit(text_surface, (x, y))
-            y += self.title_font.get_height()
+            y += line_height
         
-        # Blit the complete message surface to screen
-        self.screen.blit(message_surface, (0, 0))
+        # Center and blit just the message box
+        msg_x = (SCREEN_WIDTH - message_surface.get_width()) // 2
+        msg_y = (SCREEN_HEIGHT - message_surface.get_height()) // 2
+        self.screen.blit(message_surface, (msg_x, msg_y))
+        
         pygame.display.flip()
         self.busy = False
     
