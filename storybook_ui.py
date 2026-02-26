@@ -8,7 +8,6 @@ import sys
 import os
 import time
 import signal
-import threading
 import re
 import pygame
 import requests
@@ -37,7 +36,7 @@ except ImportError:
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 IMAGES_PATH = os.path.join(BASE_PATH, "images/")
 
-# NeoPixel Settings (from config or defaults)
+# NeoPixel Settings
 NEOPIXEL_PIN = getattr(board, f'D{NEOPIXEL_PIN}', None) if NEOPIXEL_AVAILABLE else None
 NEOPIXEL_COUNT = 1
 NEOPIXEL_BRIGHTNESS = 0.2
@@ -49,14 +48,9 @@ NEOPIXEL_SLEEP_COLOR = (0, 0, 0, 0)        # Off - Sleeping
 NEOPIXEL_WAITING_COLOR = (255, 255, 0, 0) # Yellow - Waiting for Input
 NEOPIXEL_READING_COLOR = (0, 0, 255, 0)   # Blue - Reading
 
-# Reed Switch Settings
-REED_SWITCH_PIN = board.D17 if NEOPIXEL_AVAILABLE else None
-REED_SWITCH_ENABLED = False  # Set to True when reed switch is installed
-
 # UI Settings
 SCREEN_WIDTH = 864
 SCREEN_HEIGHT = 1152
-ROTATION = 0  # No rotation needed - OS handles it
 
 # Font Settings
 try:
@@ -78,25 +72,25 @@ PARAGRAPH_SPACING = 20
 EXTRA_LINE_SPACING = 4
 
 
-# Animation Settings
-WORD_DELAY = 0.05
-TITLE_FADE_TIME = 0.05
-TITLE_FADE_STEPS = 10
-TEXT_FADE_TIME = 0.1
-TEXT_FADE_STEPS = 20
-
-# Story Settings
-STORY_WORD_LENGTH = 150  # Use from config
-
-
 class VoiceListener:
-    """Voice listener using local Whisper"""
+    """Voice listener using Google Speech Recognition"""
     
     def __init__(self, energy_threshold=300, record_timeout=10):
         print("🎤 Initializing voice listener...")
         
-        # Use hardcoded device index (more reliable than enumeration)
-        self.microphone = sr.Microphone(device_index=2)
+        # Find USB microphone automatically
+        mic_list = sr.Microphone.list_microphone_names()
+        usb_mic_index = None
+        for i, name in enumerate(mic_list):
+            if 'USB' in name.upper() or 'PNP' in name.upper():
+                usb_mic_index = i
+                print(f"🎤 Found USB microphone: {name}")
+                break
+        
+        if usb_mic_index is not None:
+            self.microphone = sr.Microphone(device_index=usb_mic_index)
+        else:
+            self.microphone = sr.Microphone()
         
         self.recognizer = sr.Recognizer()
         self.recognizer.energy_threshold = energy_threshold
@@ -110,55 +104,36 @@ class VoiceListener:
         print("✅ Microphone ready!")
     
     def listen_for_prompt(self):
-        """Listen for a story prompt with auto-retry"""
+        """Listen for a story prompt"""
+        print("\n🎤 Listening...")
         
-        for attempt in range(2):  # Try twice
+        with self.microphone as source:
             try:
-                print("\n🎤 Listening...")
+                audio = self.recognizer.listen(
+                    source,
+                    timeout=3,
+                    phrase_time_limit=self.record_timeout
+                )
                 
-                with self.microphone as source:
-                    try:
-                        audio = self.recognizer.listen(
-                            source,
-                            timeout=3,
-                            phrase_time_limit=self.record_timeout
-                        )
-                        
-                        print("🎤 Processing speech...")
-                        text = self.recognizer.recognize_google(audio)
-                        
-                        print(f"✅ You said: {text}")
-                        return text.strip()
-                        
-                    except sr.WaitTimeoutError:
-                        print("⏱️  Timeout")
-                        return None
-                    except sr.UnknownValueError:
-                        print("❌ Could not understand")
-                        return None
-                    except Exception as e:
-                        print(f"❌ Error: {e}")
-                        return None
-            
-            except (AttributeError, OSError) as e:
-                # Stream failed to open
-                if attempt == 0:
-                    print(f"⚠️  Mic error, retrying...")
-                    time.sleep(0.5)
-                    continue
-                else:
-                    print(f"❌ Microphone unavailable")
-                    return None
-        
-        return None
-            
+                print("🎤 Processing speech...")
+                text = self.recognizer.recognize_google(audio)
+                
+                print(f"✅ You said: {text}")
+                return text.strip()
+                
+            except sr.WaitTimeoutError:
+                print("⏱️  Timeout")
+                return None
+            except sr.UnknownValueError:
+                print("❌ Could not understand")
+                return None
+            except Exception as e:
+                print(f"❌ Error: {e}")
+                return None
+    
     def cleanup(self):
         """Release microphone resources"""
         try:
-            if hasattr(self, 'microphone') and self.microphone:
-                # Force close the microphone
-                if hasattr(self.microphone, 'stream') and self.microphone.stream:
-                    self.microphone.stream.close()
             print("🎤 Microphone cleaned up")
         except Exception as e:
             print(f"⚠️  Cleanup error: {e}")
@@ -194,20 +169,13 @@ class Storybook:
         self.current_page = 0
         self.current_story = 0
         self.running = True
-        self.sleeping = False
         self.busy = False
-        self.loading = False
         self._corner_taps = []  # Track corner taps for secret exit
         
         # Initialize Pygame
         os.putenv('SDL_FBDEV', '/dev/fb0')
         pygame.init()
-        #self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
-        # Create screen with actual physical dimensions, content will be rotated
-        # For rotation, screen dimensions must match physical display
-    
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
-
         pygame.mouse.set_visible(False)
         
         # Load fonts
@@ -302,10 +270,8 @@ class Storybook:
     def _set_status_color(self, color):
         """Set NeoPixel status color"""
         if self.pixels:
-            self.loading = (color == NEOPIXEL_LOADING_COLOR)
-            if not self.loading:
-                self.pixels.fill(color)
-                self.pixels.show()
+            self.pixels.fill(color)
+            self.pixels.show()
     
     def display_image(self, image_name):
         """Display a full-screen image"""
@@ -394,7 +360,7 @@ class Storybook:
                     "model": MODEL,
                     "prompt": full_prompt,
                     "stream": False,
-                    "keep_alive": -1,  # The -1 means keep it loaded forever.
+                    "keep_alive": -1,
                     "options": {
                         "temperature": TEMPERATURE,
                         "top_p": TOP_P,
@@ -411,14 +377,13 @@ class Storybook:
         except Exception as e:
             print(f"❌ Story generation error: {e}")
             return "Title: Oops!\n\nThe magic book had a little hiccup. Let's try again!"
-            
+    
     def strip_markdown(self, text):
         """Remove markdown formatting from story text"""
         text = re.sub(r'#{1,6}\s*', '', text)  # Remove ## headers
         text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)  # Remove bold
         text = re.sub(r'\*(.*?)\*', r'\1', text)  # Remove italic
         return text.strip()
-
     
     def load_story(self, story_text):
         """Parse story and create pages"""
@@ -481,29 +446,29 @@ class Storybook:
                 y += self.title_font.get_height()
         
         return page_surface
-        
+    
     def display_current_page(self):
         """Display the current page"""
         self.busy = True
-    
+        
         # Draw background
         self.screen.blit(self.images['background'], (0, 0))
-    
+        
         # Draw page content
         if self.pages:
             page = self.pages[self.current_page]
             self.screen.blit(page, (self.text_area['x'], self.text_area['y']))
-    
+        
         # Draw buttons
         if self.current_page > 0 or self.current_story > 0:
             self.buttons['back'].show(self.screen)
-    
+        
         self.buttons['next'].show(self.screen)
         self.buttons['new'].show(self.screen)
-    
+        
         pygame.display.flip()
-        self.busy = False    
-
+        self.busy = False
+    
     def previous_page(self):
         """Go to previous page"""
         if self.current_page > 0:
@@ -608,15 +573,15 @@ class Storybook:
             # Show welcome
             self.display_welcome()
             time.sleep(2)
-        
+            
             # Generate first story
             self.new_story()
-        
+            
             # Main event loop
             while self.running:
                 self.handle_events()
                 time.sleep(0.1)
-    
+        
         finally:
             # ALWAYS cleanup, even on crash
             print("🧹 Cleaning up...")
@@ -631,8 +596,6 @@ class Storybook:
 
 def main():
     """Entry point"""
-    import signal
-    
     print("🎪 Starting Magic Storybook UI...")
     
     book = None
