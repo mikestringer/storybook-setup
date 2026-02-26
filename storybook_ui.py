@@ -126,35 +126,30 @@ class VoiceListener:
         """Listen for a story prompt"""
         print("\n🎤 Listening...")
         
-        try:
-            with self.microphone as source:
-                try:
-                    audio = self.recognizer.listen(
-                        source,
-                        timeout=3,
-                        phrase_time_limit=self.record_timeout
-                    )
-                    
-                    print("🎤 Processing speech...")
-                    text = self.recognizer.recognize_google(audio)
-                    
-                    print(f"✅ You said: {text}")
-                    return text.strip()
-                    
-                except sr.WaitTimeoutError:
-                    print("⏱️  Timeout")
-                    return None
-                except sr.UnknownValueError:
-                    print("❌ Could not understand")
-                    return None
-                except Exception as e:
-                    print(f"❌ Error: {e}")
-                    return None
-                    
-        except Exception as e:
-            # Microphone failed to open
-            print(f"❌ Microphone error: {e}")
-            return "MIC_FAILED"  # Special flag
+        with self.microphone as source:
+            try:
+                audio = self.recognizer.listen(
+                    source,
+                    timeout=3,
+                    phrase_time_limit=self.record_timeout
+                )
+                
+                print("🎤 Processing speech...")
+                text = self.recognizer.recognize_google(audio)
+                
+                print(f"✅ You said: {text}")
+                return text.strip()
+                
+            except sr.WaitTimeoutError:
+                print("⏱️  Timeout")
+                return None
+            except sr.UnknownValueError:
+                print("❌ Could not understand")
+                return None
+            except Exception as e:
+                print(f"❌ Error: {e}")
+                return None
+            
     def cleanup(self):
         """Release microphone resources"""
         try:
@@ -554,33 +549,15 @@ class Storybook:
             self.running = False
             return
         
-        # Check for mic failure
-        # Check for mic failure
-        if prompt == "MIC_FAILED":
-            self._set_status_color(NEOPIXEL_READING_COLOR)
-            self.display_message("Microphone problem!\n\nPlease unplug and replug\nthe USB microphone,\nthen tap New Story.")
-            self.busy = False
-            # Return to last valid page if pages exist
-            if self.pages:
-                if self.current_page >= len(self.pages):
-                    self.current_page = len(self.pages) - 1
-                self.display_current_page()
-            return
-
         if not prompt:
             self.display_message("No prompt detected. Try again!")
             time.sleep(2)
-            self.busy = False  # Add this
+            self.busy = False
             if self.pages:
-                # Make sure current_page is valid
-                if self.current_page >= len(self.pages):
-                    self.current_page = len(self.pages) - 1
                 self.display_current_page()
             else:
                 self.display_welcome()
             return
-
-# Generate story
         
         # Generate story
         self.display_loading()
