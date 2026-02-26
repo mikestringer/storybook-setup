@@ -326,22 +326,26 @@ class Storybook:
         """Display a centered message"""
         self.busy = True
         
-        # Use background image
+        # Draw background
         self.screen.blit(self.images['background'], (0, 0))
         
-        # Render message
-        lines = self._wrap_text(message, self.title_font, self.text_area['width'])
+        # Create a message surface (like _create_page does)
+        message_surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+        message_surface.fill((255, 250, 240))  # Solid off-white fill
+        
+        # Render text onto the message surface
+        lines = self._wrap_text(message, self.title_font, SCREEN_WIDTH - 40)
         total_height = len(lines) * self.title_font.get_height()
         y = (SCREEN_HEIGHT - total_height) // 2
         
         for line in lines:
-            # Render WITHOUT antialiasing so it works with any background
-            text_surface = self.title_font.render(line, False, TITLE_COLOR)
-            
+            text_surface = self.title_font.render(line, True, TITLE_COLOR)
             x = (SCREEN_WIDTH - text_surface.get_width()) // 2
-            self.screen.blit(text_surface, (x, y))
+            message_surface.blit(text_surface, (x, y))
             y += self.title_font.get_height()
         
+        # Blit the complete message surface to screen
+        self.screen.blit(message_surface, (0, 0))
         pygame.display.flip()
         self.busy = False
     
