@@ -94,7 +94,7 @@ class VoiceListener:
     
     def __init__(self, energy_threshold=300, record_timeout=10):
         print("🎤 Initializing voice listener...")
-        time.sleep(1)  # Give USB/ALSA time to settle
+        time.sleep(.5)  # Give USB/ALSA time to settle
 
         
         # Find USB microphone automatically
