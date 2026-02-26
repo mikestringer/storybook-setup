@@ -560,12 +560,21 @@ class Storybook:
             self._set_status_color(NEOPIXEL_READING_COLOR)
             self.display_message("Microphone problem!\n\nPlease unplug and replug\nthe USB microphone,\nthen tap New Story.")
             self.busy = False
-            return  # Just return, don't wait for tap
+            # Return to last valid page if pages exist
+            if self.pages:
+                if self.current_page >= len(self.pages):
+                    self.current_page = len(self.pages) - 1
+                self.display_current_page()
+            return
 
         if not prompt:
             self.display_message("No prompt detected. Try again!")
             time.sleep(2)
+            self.busy = False  # Add this
             if self.pages:
+                # Make sure current_page is valid
+                if self.current_page >= len(self.pages):
+                    self.current_page = len(self.pages) - 1
                 self.display_current_page()
             else:
                 self.display_welcome()
