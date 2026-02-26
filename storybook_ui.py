@@ -551,11 +551,35 @@ class Storybook:
         except KeyboardInterrupt:
             self.running = False
             return
-
+        
+        # Check for mic failure
+        if prompt == "MIC_FAILED":
+            self._set_status_color(NEOPIXEL_READING_COLOR)
+            self.display_message("Microphone problem!\n\nPlease unplug and replug\nthe USB microphone.\n\nThen tap to try again.")
+            self.busy = False
+            
+            # Wait for tap
+            waiting = True
+            while waiting and self.running:
+                for event in pygame.event.get():
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        waiting = False
+                        break
+                time.sleep(0.1)
+            
+            if self.pages:
+                self.display_current_page()
+            else:
+                self.display_welcome()
+            return
+        
         if not prompt:
             self.display_message("No prompt detected. Try again!")
             time.sleep(2)
-            self.display_current_page()
+            if self.pages:
+                self.display_current_page()
+            else:
+                self.display_welcome()
             return
         
         # Generate story
