@@ -124,34 +124,35 @@ class VoiceListener:
         """Listen for a story prompt"""
         print("\n🎤 Listening...")
         
-        with self.microphone as source:
-            try:
-                audio = self.recognizer.listen(
-                    source,
-                    timeout=3,
-                    phrase_time_limit=self.record_timeout
-                )
-                
-                print("🎤 Processing speech...")
-                text = self.recognizer.recognize_google(audio)
-                #text = self.recognizer.recognize_whisper(
-                #    audio,
-                #    language="english",
-                #    model="base"
-                #)
-                
-                print(f"✅ You said: {text}")
-                return text.strip()
-                
-            except sr.WaitTimeoutError:
-                print("⏱️  Timeout")
-                return None
-            except sr.UnknownValueError:
-                print("❌ Could not understand")
-                return None
-            except Exception as e:
-                print(f"❌ Error: {e}")
-                return None
+        try:
+            with self.microphone as source:
+                try:
+                    audio = self.recognizer.listen(
+                        source,
+                        timeout=3,
+                        phrase_time_limit=self.record_timeout
+                    )
+                    
+                    print("🎤 Processing speech...")
+                    text = self.recognizer.recognize_google(audio)
+                    
+                    print(f"✅ You said: {text}")
+                    return text.strip()
+                    
+                except sr.WaitTimeoutError:
+                    print("⏱️  Timeout")
+                    return None
+                except sr.UnknownValueError:
+                    print("❌ Could not understand")
+                    return None
+                except Exception as e:
+                    print(f"❌ Error: {e}")
+                    return None
+                    
+        except Exception as e:
+            # Microphone failed to open
+            print(f"❌ Microphone error: {e}")
+            return "MIC_FAILED"  # Special flag
     def cleanup(self):
         """Release microphone resources"""
         try:
