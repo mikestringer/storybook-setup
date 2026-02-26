@@ -329,16 +329,14 @@ class Storybook:
         # Use background image
         self.screen.blit(self.images['background'], (0, 0))
         
-        # Render message with transparent background
+        # Render message
         lines = self._wrap_text(message, self.title_font, self.text_area['width'])
         total_height = len(lines) * self.title_font.get_height()
         y = (SCREEN_HEIGHT - total_height) // 2
         
         for line in lines:
-            # Render text (creates white background by default)
-            text_surface = self.title_font.render(line, True, TITLE_COLOR)
-            # Make white transparent
-            text_surface.set_colorkey((255, 255, 255))
+            # Render WITHOUT antialiasing so it works with any background
+            text_surface = self.title_font.render(line, False, TITLE_COLOR)
             
             x = (SCREEN_WIDTH - text_surface.get_width()) // 2
             self.screen.blit(text_surface, (x, y))
