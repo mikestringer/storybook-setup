@@ -448,31 +448,24 @@ class Storybook:
         self.busy = False
     
     def _create_page(self, title=None):
-        """Create a new page surface using background image"""
-        page_surface = pygame.Surface(
-            (self.text_area['width'], self.text_area['height'])
-        )
-        
-        # Scale background image to fit page size
-        if 'background' in self.images:
-            scaled_bg = pygame.transform.scale(
-                self.images['background'],
-                (self.text_area['width'], self.text_area['height'])
-            )
-            page_surface.blit(scaled_bg, (0, 0))
-        else:
-            page_surface.fill((255, 250, 240))
-        
-        if title:
-            lines = self._wrap_text(title, self.title_font, self.text_area['width'])
-            y = 0
-            for line in lines:
-                text_surface = self.title_font.render(line, True, TITLE_COLOR)
-                x = (self.text_area['width'] - text_surface.get_width()) // 2
-                page_surface.blit(text_surface, (x, y))
-                y += self.title_font.get_height()
-        
-        return page_surface
+    """Create a new page surface with off-white background"""
+    page_surface = pygame.Surface(
+        (self.text_area['width'], self.text_area['height'])
+    )
+    
+    # Fill with off-white
+    page_surface.fill((255, 250, 240))
+    
+    if title:
+        lines = self._wrap_text(title, self.title_font, self.text_area['width'])
+        y = 0
+        for line in lines:
+            text_surface = self.title_font.render(line, True, TITLE_COLOR)
+            x = (self.text_area['width'] - text_surface.get_width()) // 2
+            page_surface.blit(text_surface, (x, y))
+            y += self.title_font.get_height()
+    
+    return page_surface
     
     def display_current_page(self):
         """Display the current page"""
