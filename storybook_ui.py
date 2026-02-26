@@ -94,22 +94,9 @@ class VoiceListener:
     
     def __init__(self, energy_threshold=300, record_timeout=10):
         print("🎤 Initializing voice listener...")
-        #time.sleep(1)  # Give USB/ALSA time to settle
-
         
-        # Find USB microphone automatically
-        mic_list = sr.Microphone.list_microphone_names()
-        usb_mic_index = None
-        for i, name in enumerate(mic_list):
-            if 'USB' in name.upper() or 'PNP' in name.upper():
-                usb_mic_index = i
-                print(f"🎤 Found USB microphone: {name}")
-                break
-        
-        if usb_mic_index is not None:
-            self.microphone = sr.Microphone(device_index=usb_mic_index)
-        else:
-            self.microphone = sr.Microphone()
+        # Use hardcoded device index (more reliable than enumeration)
+        self.microphone = sr.Microphone(device_index=2)
         
         self.recognizer = sr.Recognizer()
         self.recognizer.energy_threshold = energy_threshold
@@ -123,32 +110,47 @@ class VoiceListener:
         print("✅ Microphone ready!")
     
     def listen_for_prompt(self):
-        """Listen for a story prompt"""
-        print("\n🎤 Listening...")
+        """Listen for a story prompt with auto-retry"""
         
-        with self.microphone as source:
+        for attempt in range(2):  # Try twice
             try:
-                audio = self.recognizer.listen(
-                    source,
-                    timeout=3,
-                    phrase_time_limit=self.record_timeout
-                )
+                print("\n🎤 Listening...")
                 
-                print("🎤 Processing speech...")
-                text = self.recognizer.recognize_google(audio)
-                
-                print(f"✅ You said: {text}")
-                return text.strip()
-                
-            except sr.WaitTimeoutError:
-                print("⏱️  Timeout")
-                return None
-            except sr.UnknownValueError:
-                print("❌ Could not understand")
-                return None
-            except Exception as e:
-                print(f"❌ Error: {e}")
-                return None
+                with self.microphone as source:
+                    try:
+                        audio = self.recognizer.listen(
+                            source,
+                            timeout=3,
+                            phrase_time_limit=self.record_timeout
+                        )
+                        
+                        print("🎤 Processing speech...")
+                        text = self.recognizer.recognize_google(audio)
+                        
+                        print(f"✅ You said: {text}")
+                        return text.strip()
+                        
+                    except sr.WaitTimeoutError:
+                        print("⏱️  Timeout")
+                        return None
+                    except sr.UnknownValueError:
+                        print("❌ Could not understand")
+                        return None
+                    except Exception as e:
+                        print(f"❌ Error: {e}")
+                        return None
+            
+            except (AttributeError, OSError) as e:
+                # Stream failed to open
+                if attempt == 0:
+                    print(f"⚠️  Mic error, retrying...")
+                    time.sleep(0.5)
+                    continue
+                else:
+                    print(f"❌ Microphone unavailable")
+                    return None
+        
+        return None
             
     def cleanup(self):
         """Release microphone resources"""
