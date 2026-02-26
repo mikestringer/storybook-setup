@@ -553,20 +553,12 @@ class Storybook:
             return
         
         # Check for mic failure
+        # Check for mic failure
         if prompt == "MIC_FAILED":
             self._set_status_color(NEOPIXEL_READING_COLOR)
             self.display_message("Microphone problem!\n\nPlease unplug and replug\nthe USB microphone,\nthen tap New Story.")
             self.busy = False
             return  # Just return, don't wait for tap
-                
-                if not prompt:
-                    self.display_message("No prompt detected. Try again!")
-                    time.sleep(2)
-                    if self.pages:
-                        self.display_current_page()
-                    else:
-                        self.display_welcome()
-                    return
         
         # Generate story
         self.display_loading()
